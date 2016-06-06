@@ -25,8 +25,11 @@ public class MotionMonitor {
     private void init() {
         ledActive.setShutdownOptions(true, PinState.LOW);
         button.addTrigger(new GpioCallbackTrigger(() -> {
-            isMonitoring = !isMonitoring;
-            ledActive.setState(isMonitoring);
+
+            if (button.isHigh()) {
+                isMonitoring = !isMonitoring;
+                ledActive.setState(isMonitoring);
+            }
             return null;
         }));
 
