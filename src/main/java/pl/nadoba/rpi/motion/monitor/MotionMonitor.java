@@ -2,13 +2,10 @@ package pl.nadoba.rpi.motion.monitor;
 
 import com.pi4j.io.gpio.*;
 import com.pi4j.io.gpio.trigger.GpioCallbackTrigger;
-import com.pi4j.io.gpio.trigger.GpioToggleStateTrigger;
-
-import java.util.concurrent.Callable;
 
 public class MotionMonitor {
 
-    private final static int CHECK_DURATION = 2000;
+    private final static int CHECK_DURATION = 2500;
 
     private final GpioController gpio = GpioFactory.getInstance();
     private final GpioPinDigitalOutput ledActive = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_02, "ACTIVE", PinState.LOW);
@@ -18,6 +15,8 @@ public class MotionMonitor {
 
     private CsvWriter csvWriter;
 
+    private boolean isMonitoring = false;
+
     public MotionMonitor(String outputFile) {
         csvWriter = new CsvWriter(outputFile);
         init();
@@ -25,20 +24,24 @@ public class MotionMonitor {
 
     private void init() {
         ledActive.setShutdownOptions(true, PinState.LOW);
-        button.addTrigger(new GpioToggleStateTrigger(ledActive));
+        button.addTrigger(new GpioCallbackTrigger(() -> {
+            isMonitoring = !isMonitoring;
+            ledActive.setState(isMonitoring);
+            return null;
+        }));
 
         ledCapture.setShutdownOptions(true, PinState.LOW);
 
-        motionSensor.addTrigger(new GpioCallbackTrigger(new Callable<Void>() {
-            public Void call() {
+        motionSensor.addTrigger(new GpioCallbackTrigger(() -> {
 
-                if (ledActive.isHigh()) {
-                    csvWriter.writeMovementEvent();
-                }
-
-                ledCapture.setState(motionSensor.getState());
-                return null;
+            if (isMonitoring && motionSensor.isHigh()) {
+                ledCapture.setState(PinState.HIGH);
+                csvWriter.writeMovementEvent();
             }
+
+            ledCapture.setState(PinState.LOW);
+
+            return null;
         }));
     }
 
