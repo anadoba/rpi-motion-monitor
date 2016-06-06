@@ -2,7 +2,7 @@ package pl.nadoba.rpi.motion.monitor;
 
 import com.pi4j.io.gpio.*;
 import com.pi4j.io.gpio.trigger.GpioCallbackTrigger;
-import com.pi4j.io.gpio.trigger.GpioSyncStateTrigger;
+import com.pi4j.io.gpio.trigger.GpioToggleStateTrigger;
 
 import java.util.concurrent.Callable;
 
@@ -25,10 +25,9 @@ public class MotionMonitor {
 
     private void init() {
         ledActive.setShutdownOptions(true, PinState.LOW);
-        button.addTrigger(new GpioSyncStateTrigger(ledActive));
+        button.addTrigger(new GpioToggleStateTrigger(ledActive));
 
         ledCapture.setShutdownOptions(true, PinState.LOW);
-        motionSensor.addTrigger(new GpioSyncStateTrigger(ledCapture));
 
         motionSensor.addTrigger(new GpioCallbackTrigger(new Callable<Void>() {
             public Void call() {
@@ -37,6 +36,7 @@ public class MotionMonitor {
                     csvWriter.writeMovementEvent();
                 }
 
+                ledCapture.setState(motionSensor.getState());
                 return null;
             }
         }));

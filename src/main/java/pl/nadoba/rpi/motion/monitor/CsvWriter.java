@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class CsvWriter {
@@ -38,6 +39,7 @@ public class CsvWriter {
         List<String> record = new ArrayList<>();
         record.add("MOVEMENT");
         record.add(String.format(TIMESTAMP_FORMAT, getCurrentTimestamp()));
+        System.out.println("Exporting to CSV: " + Arrays.deepToString(record.toArray()));
 
         try {
             csvFilePrinter.printRecord(record);
